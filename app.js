@@ -1,75 +1,221 @@
 const { prompt } = require("inquirer");
-const mysql = require("mysql");
+const connection = require("./db");
 
-const connection = mysql.createConnection({
-  host: "localhost",
-  // Your port; if not 3306
-  port: 3306,
-  // Your username
-  user: "root",
-  // Your password
-  password: "",
-  database: "employeeTracker_DB",
-});
+init();
 
-connection.connect(() => {
-  console.log("Welcome to Employee Tracker!");
-  // Start my app
-  whatToDo();
-});
-
-async function whatToDo() {
-  const { whatToDo } = await prompt({
-    name: "whatToDo",
+async function init() {
+  const { action } = await prompt({
+    name: "action",
     message: "What would you like to do?",
     choices: [
       "View All Employees",
       "View All Employees By Department",
       "View All Employees By Manager",
       "Add Employee",
+      "Add Department",
+      "Add Role",
+      "Update employee roles",
       "Remove Employee",
-      "Update Employee Role",
-      "Update Employee Manager",
       "EXIT",
     ],
     type: "list",
   });
 
-  if (whatToDo === "View All Employees") {
-    viewAllEmp();}
-   else if (whatToDo === "View All Employees By Department") {
-    viewByDepart();
-  } 
-//   else if (whatToDo === "View All Employees By Manager") {
-//     viewByManager();
-//   } else if (whatToDo === "Add Employee") {
-//     addEmployee();
-//   } else if (whatToDo === "Remove Employee") {
-//     viewByDepart();
-//   } else if (whatToDo === "Update Employee Role") {
-//     viewByDepart();
-//   } else if (whatToDo === "Update Employee Manager") {
-//     viewByDepart();
-//   } 
-  else {
-    connection.end();
+  switch (action) {
+    case "View All Employees":
+      viewAllEmp();
+      break;
+    case "View All Employees By Department":
+      viewByDepart();
+      break;
+    case "View All Employees By Manager":
+      viewByManager();
+      break;
+    case "Add Employee":
+      addEmployee();
+      break;
+    case "Add Department":
+      addDepartment();
+      break;
+    case "Add Role":
+      addRole();
+      break;
+    case "Update employee roles":
+      updateEmpRoles();
+    case "Remove Employee":
+      removeEmployee();
+      break;
+      break;
+    default:
+      process.exit(0);
   }
 }
 
-function viewAllEmp() {
-    connection.query("SELECT * FROM employee", function(err, res) {
-        if(err) throw err;
-        console.table(res)
-    } )
-}
-async function viewByDepart(){
-    const {viewByDepart} = await prompt({
-       name: "viewDepart",
-       message: "What department would you like to chose?",
-       choices: ["Sales", "Engineering", "Finance", "Legal"],
-       type: "list"
-    })
+async function viewAllEmp() {
+  const query =
+    "SELECT first_name, last_name, title, salary, name AS department, manager_id AS manager_name FROM employee INNER JOIN role ON role.id = employee.role_id INNER JOIN department ON department.id = role.department_id";
 
-    
-    connection.query("SELECT * FROM employee WHERE ?")
+  //   if (manager_id === 1) {
+  //     employee.manager_id = "John Doe";
+  //   }
+  //   if (role === 3) {
+  //     employee.manager_id = "Mary Smith";
+  //   }
+  //   if (role === 7) {
+  //     employee.manager_id = "Gary Stone";
+  //   }
+
+  const data = await connection.query(query);
+  console.table(data);
+  init();
+}
+
+async function viewByDepart() {
+  const department = await prompt({
+    name: "department",
+    message: "What department would you like to chose?",
+    choices: ["Sales", "Engineering", "Finance", "Legal"],
+    type: "list",
+  });
+
+  const query = `SELECT first_name, last_name, title, salary
+    FROM employee 
+    INNER JOIN role ON employee.role_id = role.id 
+    INNER JOIN department ON role.department_id= department.id 
+    WHERE department.name = ?`;
+
+  const data = await connection.query(query, department.department);
+  console.table(data);
+  init();
+}
+async function viewByManager() {
+  const { manager } = await prompt({
+    name: "manager",
+    message: "What manager would you like to chose?",
+    choices: ["John Doe", "Mary Smith", "Gary Stone"],
+    type: "list",
+  });
+  let manID;
+  if (manager === "John Doe") {
+    manID = 1;
+  }
+  if (manager === "Mary Smith") {
+    manID = 3;
+  }
+  if (manager === "Gary Stone") {
+    manID = 7;
+  }
+
+  const query = `SELECT first_name, last_name, title, salary
+    FROM employee
+    INNER JOIN role ON employee.role_id = role.id  
+    WHERE manager_id = ?`;
+
+  console.log(manager.manager);
+
+  const data = await connection.query(query, manID);
+  console.table(data);
+  init();
+}
+
+async function addEmployee() {
+  const { first_name, last_name, role, salary } = await prompt([
+    {
+      type: "input",
+      name: "first_name",
+      message: "What is employee first name?",
+    },
+    {
+      type: "input",
+      name: "last_name",
+      message: "What is employee last name?",
+    },
+    {
+      type: "list",
+      name: "role",
+      message: "What is employee role?",
+      choices: ["Salesperson", "Software Engineer", "Accountant", "Lawyer"],
+    },
+    {
+      type: "number",
+      name: "salary",
+      message: "What is employee's salary",
+    },
+  ]);
+
+  const query1 = `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)`;
+  const query2 = `INSERT INTO role (title, salary) VALUES (?, ?)`;
+  let depID;
+  let roleID;
+  let manager_id;
+  if (role === "Salesperson") {
+    depID = 1;
+    roleID = 2;
+    manager_id = 3;
+  }
+  if (role === "Software Engineer") {
+    depID = 2;
+    roleID = 4;
+    manager_id = 3;
+  }
+  if (role === "Accountant") {
+    depID = 3;
+    roleID = 5;
+  }
+  if (role === "Lawyer") {
+    depID = 4;
+    roleID = 6;
+    manager_id = 7;
+  }
+
+  const query3 = `UPDATE role SET department_id = ? WHERE title = ?`;
+
+  const data1 = await connection.query(query1, [
+    first_name,
+    last_name,
+    roleID,
+    manager_id,
+  ]);
+  const data2 = await connection.query(query2, [role, salary]);
+  const data3 = await connection.query(query3, [depID, role]);
+
+  console.log("New employee was added!");
+
+  init();
+}
+
+async function addDepartment() {
+  const { department } = await prompt({
+    name: "department",
+    message: "What department would you like to add?",
+    type: "input",
+  });
+
+  const query = `INSERT INTO department (name) VALUES (?)`;
+  console.log(department);
+
+  const data = await connection.query(query, [department]);
+  console.log("New department added!");
+  init();
+}
+async function addRole() {
+  const { title, salary } = await prompt(
+    {
+      name: "title",
+      message: "What role would you like to add?",
+      type: "input",
+    },
+    {
+      type: "number",
+      name: "salary",
+      message: "What is the salary for this role",
+    }
+  );
+
+  const query = `INSERT INTO role (title, salary) VALUES (?, ?)`;
+  console.log(title, salary);
+
+  const data = await connection.query(query, [title, salary]);
+  console.log("New role added!");
+  init();
 }
