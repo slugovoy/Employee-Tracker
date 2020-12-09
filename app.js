@@ -11,6 +11,8 @@ async function init() {
       "View All Employees",
       "View All Employees By Department",
       "View All Employees By Manager",
+      "View All Departments",
+      "View All Roles",
       "Add Employee",
       "Add Department",
       "Add Role",
@@ -30,6 +32,12 @@ async function init() {
       break;
     case "View All Employees By Manager":
       viewByManager();
+      break;
+    case "View All Departments":
+      viewAllDep();
+      break;
+    case "View All Roles":
+      viewAllRoles();
       break;
     case "Add Employee":
       addEmployee();
@@ -53,17 +61,7 @@ async function init() {
 
 async function viewAllEmp() {
   const query =
-    "SELECT first_name, last_name, title, salary, name AS department, manager_id AS manager_name FROM employee INNER JOIN role ON role.id = employee.role_id INNER JOIN department ON department.id = role.department_id";
-
-  //   if (manager_id === 1) {
-  //     employee.manager_id = "John Doe";
-  //   }
-  //   if (role === 3) {
-  //     employee.manager_id = "Mary Smith";
-  //   }
-  //   if (role === 7) {
-  //     employee.manager_id = "Gary Stone";
-  //   }
+    "SELECT first_name, last_name, title, salary, name AS department, manager_id FROM employee INNER JOIN role ON role.id = employee.role_id INNER JOIN department ON department.id = role.department_id";
 
   const data = await connection.query(query);
   console.table(data);
@@ -114,6 +112,21 @@ async function viewByManager() {
   console.log(manager.manager);
 
   const data = await connection.query(query, manID);
+  console.table(data);
+  init();
+}
+async function viewAllDep() {
+  const query = "SELECT *FROM department";
+
+  const data = await connection.query(query);
+  console.table(data);
+  init();
+}
+async function viewAllRoles() {
+  const query =
+    "SELECT * FROM role";
+
+  const data = await connection.query(query);
   console.table(data);
   init();
 }
@@ -209,10 +222,15 @@ async function addRole() {
       type: "number",
       name: "salary",
       message: "What is the salary for this role",
+    },
+    {
+      name: "belongTo",
+      message: "What department new role belongs to?",
+      choices: ["Sales", "Engineering", "Finance", "Legal"],
     }
   );
 
-  const query = `INSERT INTO role (title, salary) VALUES (?, ?)`;
+  const query = `INSERT INTO role (title, salary, department_id) VALUES (?, ?)`;
   console.log(title, salary);
 
   const data = await connection.query(query, [title, salary]);
