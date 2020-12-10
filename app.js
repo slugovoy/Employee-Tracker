@@ -138,14 +138,14 @@ async function viewByManager() {
   init();
 }
 async function viewAllDep() {
-  const query = "SELECT * FROM department";
+  const query = "SELECT name FROM department";
 
   const data = await connection.query(query);
   console.table(data);
   init();
 }
 async function viewAllRoles() {
-  const query = "SELECT * FROM role";
+  const query = "SELECT title, salary FROM role";
 
   const data = await connection.query(query);
   console.table(data);
@@ -177,14 +177,8 @@ async function addEmployee() {
   ]);
   console.log(role);
 
-  //   const query2 = `INSERT INTO role (title, salary) VALUES (?, ?)`;
-
-  //   const query3 = `UPDATE role SET department_id = ? WHERE title = ?`;
-
   const query1 = `INSERT INTO employee (first_name, last_name, role_id) VALUES (?, ?, ?)`;
   const data1 = await connection.query(query1, [first_name, last_name, role]);
-  //   const data2 = await connection.query(query2, [role, salary]);
-  //   const data3 = await connection.query(query3, [depID, role]);
 
   console.log("New employee was added!");
 
@@ -256,7 +250,7 @@ async function updateEmpRoles() {
         name: roleItem.title,
         value: roleItem.id,
       })),
-      message: "What role do you want to give?"
+      message: "What role do you want to give?",
     },
   ]);
   console.log(empName, newRole);
@@ -265,5 +259,26 @@ async function updateEmpRoles() {
 
   const data = await connection.query(query, [newRole, empName]);
   console.log("Employee's role updated!");
+  init();
+}
+
+async function removeEmployee() {
+  const empsInArray = await getEmpsInArray();
+  const { empName } = await prompt([
+    {
+      name: "empName",
+      type: "list",
+      choices: empsInArray.map((employee) => ({
+        name: employee.name,
+        value: employee.id,
+      })),
+      message: "What employee do you want to remove?",
+    },
+  ]);
+
+  const query = `DELETE FROM employee WHERE id = ?`;
+
+  const data = await connection.query(query, [empName]);
+  console.log("Employee deleted!");
   init();
 }
