@@ -1,6 +1,24 @@
 const { prompt } = require("inquirer");
 const connection = require("./db");
+const logo = require("asciiart-logo");
+const config = require("./package.json");
 
+console.log(
+  logo({
+    name: "EMPLOYEE TRACKER",
+    font: "DOOM",
+    lineChars: 14,
+    padding: 8,
+    margin: 8,
+    borderColor: "bold-green",
+    logoColor: "bold-red",
+    textColor: "green",
+  })
+    .emptyLine()
+    .right("version 3.7.123")
+    .emptyLine()
+    .render()
+);
 init();
 
 async function init() {
@@ -18,6 +36,8 @@ async function init() {
       "Add Role",
       "Update employee roles",
       "Remove Employee",
+      "Remove Role",
+      "Remove Department",
       "EXIT",
     ],
     type: "list",
@@ -53,6 +73,11 @@ async function init() {
     case "Remove Employee":
       removeEmployee();
       break;
+    case "Remove Role":
+      removeRole();
+      break;
+    case "Remove Department":
+      removeDepartment();
       break;
     default:
       process.exit(0);
@@ -81,7 +106,14 @@ async function getEmpsInArray() {
 
 async function viewAllEmp() {
   const query =
-    "SELECT first_name, last_name, title, salary, name AS department, manager_id FROM employee INNER JOIN role ON role.id = employee.role_id INNER JOIN department ON department.id = role.department_id";
+    `SELECT  e.first_name, e.last_name,
+    role.title, role.salary, department.name,
+    IFNULL(CONCAT(m.first_name, ' ', m.last_name),'no manager') AS 'Manager'
+    FROM employee e
+    LEFT JOIN employee m ON m.id = e.manager_id
+    INNER JOIN role ON e.role_id = role.id
+    INNER JOIN department ON role.department_id = department.id
+    ORDER BY manager DESC;`;
 
   const data = await connection.query(query);
   console.table(data);
@@ -131,8 +163,6 @@ async function viewByManager() {
     INNER JOIN role ON employee.role_id = role.id  
     WHERE manager_id = ?`;
 
-  console.log(manager.manager);
-
   const data = await connection.query(query, manID);
   console.table(data);
   init();
@@ -145,7 +175,11 @@ async function viewAllDep() {
   init();
 }
 async function viewAllRoles() {
-  const query = "SELECT title, salary FROM role";
+  const depsArray = await getDepsInArray();
+  const query = `SELECT title, salary, name AS department_name FROM role
+  INNER JOIN department
+  ON role.department_id = department.id
+  ORDER BY name ASC`;
 
   const data = await connection.query(query);
   console.table(data);
@@ -154,7 +188,7 @@ async function viewAllRoles() {
 
 async function addEmployee() {
   const rolesArray = await getRolesInArray();
-  const { first_name, last_name, role } = await prompt([
+  const { first_name, last_name, role, manager } = await prompt([
     {
       type: "input",
       name: "first_name",
@@ -174,11 +208,28 @@ async function addEmployee() {
         value: roleItem.id,
       })),
     },
+    {
+        type: "list",
+        name: "manager",
+        message: "Who will be the employee manager?",
+        choices: ["Mary Smith", "Garry Stone", "John Doe"]
+    }
   ]);
   console.log(role);
 
-  const query1 = `INSERT INTO employee (first_name, last_name, role_id) VALUES (?, ?, ?)`;
-  const data1 = await connection.query(query1, [first_name, last_name, role]);
+  let manID;
+  if (manager === "John Doe") {
+    manID = 1;
+  }
+  if (manager === "Mary Smith") {
+    manID = 3;
+  }
+  if (manager === "Gary Stone") {
+    manID = 7;
+  }
+
+  const query1 = `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?,?)`;
+  const data1 = await connection.query(query1, [first_name, last_name, role, manID]);
 
   console.log("New employee was added!");
 
@@ -280,5 +331,45 @@ async function removeEmployee() {
 
   const data = await connection.query(query, [empName]);
   console.log("Employee deleted!");
+  init();
+}
+async function removeRole() {
+  const rolesInArray = await getRolesInArray();
+  const { role } = await prompt([
+    {
+      name: "role",
+      type: "list",
+      choices: rolesInArray.map((role) => ({
+        name: role.title,
+        value: role.id,
+      })),
+      message: "What role do you want to remove?",
+    },
+  ]);
+
+  const query = `DELETE FROM role WHERE id = ?`;
+
+  const data = await connection.query(query, [role]);
+  console.log("Role deleted!");
+  init();
+}
+async function removeDepartment() {
+  const depsInArray = await getDepsInArray();
+  const { department } = await prompt([
+    {
+      name: "department",
+      type: "list",
+      choices: depsInArray.map((depart) => ({
+        name: depart.name,
+        value: depart.id,
+      })),
+      message: "What role do you want to remove?",
+    },
+  ]);
+
+  const query = `DELETE FROM department WHERE id = ?`;
+
+  const data = await connection.query(query, [department]);
+  console.log("Department deleted!");
   init();
 }
