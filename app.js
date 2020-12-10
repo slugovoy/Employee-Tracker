@@ -38,6 +38,7 @@ async function init() {
       "Remove Employee",
       "Remove Role",
       "Remove Department",
+      "View total budget of department",
       "EXIT",
     ],
     type: "list",
@@ -78,6 +79,9 @@ async function init() {
       break;
     case "Remove Department":
       removeDepartment();
+      break;
+    case "View total budget of department":
+      viewBudget();
       break;
     default:
       process.exit(0);
@@ -373,3 +377,29 @@ async function removeDepartment() {
   console.log("Department deleted!");
   init();
 }
+
+async function viewBudget() {
+    const depsArray = await getDepsInArray();
+  
+    const { department } = await prompt({
+      name: "department",
+      type: "list",
+      message: "What department would you like to chose?",
+      choices: depsArray.map((depart) => ({
+        name: depart.name,
+        value: depart.id,
+      })),
+    });
+  
+    const query = `SELECT first_name, last_name, title, salary
+      FROM employee 
+      INNER JOIN role ON employee.role_id = role.id 
+      INNER JOIN department ON role.department_id= department.id 
+      WHERE department.id = ?`;
+  
+    const data = await connection.query(query, [department]);
+    console.table(data);
+    init();
+  }
+
+
