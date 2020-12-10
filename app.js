@@ -2,6 +2,8 @@ const { prompt } = require("inquirer");
 const connection = require("./db");
 const logo = require("asciiart-logo");
 const config = require("./package.json");
+const { viewAllEmp, viewByDepart, viewByManager, viewAllDep, viewAllRoles  } = require("./Assets/view.js")
+const { addEmployee, addDepartment, addRole } = require("./Assets/addEmpDeptRole.js")
 
 console.log(
   logo({
@@ -46,39 +48,50 @@ async function init() {
 
   switch (action) {
     case "View All Employees":
-      viewAllEmp();
+      await viewAllEmp();
+      init();
       break;
     case "View All Employees By Department":
-      viewByDepart();
+      await viewByDepart();
+      init();
       break;
     case "View All Employees By Manager":
-      viewByManager();
+      await viewByManager();
+      init();
       break;
     case "View All Departments":
-      viewAllDep();
+      await viewAllDep();
+      init();
       break;
     case "View All Roles":
-      viewAllRoles();
+      await viewAllRoles();
+      init();
       break;
     case "Add Employee":
-      addEmployee();
+      await addEmployee();
+      init();
       break;
     case "Add Department":
-      addDepartment();
+      await addDepartment();
+      init();
       break;
     case "Add Role":
-      addRole();
+      await addRole();
+      init();
       break;
     case "Update employee roles":
       updateEmpRoles();
     case "Remove Employee":
-      removeEmployee();
+      await removeEmployee();
+      init();
       break;
     case "Remove Role":
-      removeRole();
+      await removeRole();
+      init();
       break;
     case "Remove Department":
-      removeDepartment();
+      await removeDepartment();
+      init();
       break;
     case "View total budget of department":
       viewBudget();
@@ -88,202 +101,202 @@ async function init() {
   }
 }
 // Methods
-async function getDepsInArray() {
-  const query = `SELECT name, id FROM department`;
-  const data = await connection.query(query);
+// async function getDepsInArray() {
+//   const query = `SELECT name, id FROM department`;
+//   const data = await connection.query(query);
 
-  return data;
-}
+//   return data;
+// }
 
-async function getRolesInArray() {
-  const query = `SELECT title, id FROM role`;
-  const data = await connection.query(query);
+// async function getRolesInArray() {
+//   const query = `SELECT title, id FROM role`;
+//   const data = await connection.query(query);
 
-  return data;
-}
-async function getEmpsInArray() {
-  const query = `SELECT CONCAT(first_name, " ", last_name) AS name, id FROM employee`;
-  const data = await connection.query(query);
+//   return data;
+// }
+// async function getEmpsInArray() {
+//   const query = `SELECT CONCAT(first_name, " ", last_name) AS name, id FROM employee`;
+//   const data = await connection.query(query);
 
-  return data;
-}
+//   return data;
+// }
 
-async function viewAllEmp() {
-  const query =
-    `SELECT  e.first_name, e.last_name,
-    role.title, role.salary, department.name,
-    IFNULL(CONCAT(m.first_name, ' ', m.last_name),'no manager') AS 'Manager'
-    FROM employee e
-    LEFT JOIN employee m ON m.id = e.manager_id
-    INNER JOIN role ON e.role_id = role.id
-    INNER JOIN department ON role.department_id = department.id
-    ORDER BY manager DESC;`;
+// async function viewAllEmp() {
+//   const query =
+//     `SELECT  e.first_name, e.last_name,
+//     role.title, role.salary, department.name,
+//     IFNULL(CONCAT(m.first_name, ' ', m.last_name),'no manager') AS 'Manager'
+//     FROM employee e
+//     LEFT JOIN employee m ON m.id = e.manager_id
+//     INNER JOIN role ON e.role_id = role.id
+//     INNER JOIN department ON role.department_id = department.id
+//     ORDER BY manager DESC;`;
 
-  const data = await connection.query(query);
-  console.table(data);
-  init();
-}
+//   const data = await connection.query(query);
+//   console.table(data);
+//   init();
+// }
 
-async function viewByDepart() {
-  const depsArray = await getDepsInArray();
+// async function viewByDepart() {
+//   const depsArray = await getDepsInArray();
 
-  const department = await prompt({
-    name: "department",
-    message: "What department would you like to chose?",
-    choices: [...depsArray],
-    type: "list",
-  });
+//   const department = await prompt({
+//     name: "department",
+//     message: "What department would you like to chose?",
+//     choices: [...depsArray],
+//     type: "list",
+//   });
 
-  const query = `SELECT first_name, last_name, title, salary
-    FROM employee 
-    INNER JOIN role ON employee.role_id = role.id 
-    INNER JOIN department ON role.department_id= department.id 
-    WHERE department.name = ?`;
+//   const query = `SELECT first_name, last_name, title, salary
+//     FROM employee 
+//     INNER JOIN role ON employee.role_id = role.id 
+//     INNER JOIN department ON role.department_id= department.id 
+//     WHERE department.name = ?`;
 
-  const data = await connection.query(query, department.department);
-  console.table(data);
-  init();
-}
-async function viewByManager() {
-  const { manager } = await prompt({
-    name: "manager",
-    message: "What manager would you like to chose?",
-    choices: ["John Doe", "Mary Smith", "Gary Stone"],
-    type: "list",
-  });
-  let manID;
-  if (manager === "John Doe") {
-    manID = 1;
-  }
-  if (manager === "Mary Smith") {
-    manID = 3;
-  }
-  if (manager === "Gary Stone") {
-    manID = 7;
-  }
+//   const data = await connection.query(query, department.department);
+//   console.table(data);
+//   init();
+// }
+// async function viewByManager() {
+//   const { manager } = await prompt({
+//     name: "manager",
+//     message: "What manager would you like to chose?",
+//     choices: ["John Doe", "Mary Smith", "Gary Stone"],
+//     type: "list",
+//   });
+//   let manID;
+//   if (manager === "John Doe") {
+//     manID = 1;
+//   }
+//   if (manager === "Mary Smith") {
+//     manID = 3;
+//   }
+//   if (manager === "Gary Stone") {
+//     manID = 7;
+//   }
 
-  const query = `SELECT first_name, last_name, title, salary
-    FROM employee
-    INNER JOIN role ON employee.role_id = role.id  
-    WHERE manager_id = ?`;
+//   const query = `SELECT first_name, last_name, title, salary
+//     FROM employee
+//     INNER JOIN role ON employee.role_id = role.id  
+//     WHERE manager_id = ?`;
 
-  const data = await connection.query(query, manID);
-  console.table(data);
-  init();
-}
-async function viewAllDep() {
-  const query = "SELECT name FROM department";
+//   const data = await connection.query(query, manID);
+//   console.table(data);
+//   init();
+// }
+// async function viewAllDep() {
+//   const query = "SELECT name FROM department";
 
-  const data = await connection.query(query);
-  console.table(data);
-  init();
-}
-async function viewAllRoles() {
-  const depsArray = await getDepsInArray();
-  const query = `SELECT title, salary, name AS department_name FROM role
-  INNER JOIN department
-  ON role.department_id = department.id
-  ORDER BY name ASC`;
+//   const data = await connection.query(query);
+//   console.table(data);
+//   init();
+// }
+// async function viewAllRoles() {
+//   const depsArray = await getDepsInArray();
+//   const query = `SELECT title, salary, name AS department_name FROM role
+//   INNER JOIN department
+//   ON role.department_id = department.id
+//   ORDER BY name ASC`;
 
-  const data = await connection.query(query);
-  console.table(data);
-  init();
-}
+//   const data = await connection.query(query);
+//   console.table(data);
+//   init();
+// }
 
-async function addEmployee() {
-  const rolesArray = await getRolesInArray();
-  const { first_name, last_name, role, manager } = await prompt([
-    {
-      type: "input",
-      name: "first_name",
-      message: "What is employee first name?",
-    },
-    {
-      type: "input",
-      name: "last_name",
-      message: "What is employee last name?",
-    },
-    {
-      type: "list",
-      name: "role",
-      message: "What is employee role?",
-      choices: rolesArray.map((roleItem) => ({
-        name: roleItem.title,
-        value: roleItem.id,
-      })),
-    },
-    {
-        type: "list",
-        name: "manager",
-        message: "Who will be the employee manager?",
-        choices: ["Mary Smith", "Garry Stone", "John Doe"]
-    }
-  ]);
-  console.log(role);
+// async function addEmployee() {
+//   const rolesArray = await getRolesInArray();
+//   const { first_name, last_name, role, manager } = await prompt([
+//     {
+//       type: "input",
+//       name: "first_name",
+//       message: "What is employee first name?",
+//     },
+//     {
+//       type: "input",
+//       name: "last_name",
+//       message: "What is employee last name?",
+//     },
+//     {
+//       type: "list",
+//       name: "role",
+//       message: "What is employee role?",
+//       choices: rolesArray.map((roleItem) => ({
+//         name: roleItem.title,
+//         value: roleItem.id,
+//       })),
+//     },
+//     {
+//         type: "list",
+//         name: "manager",
+//         message: "Who will be the employee manager?",
+//         choices: ["Mary Smith", "Garry Stone", "John Doe"]
+//     }
+//   ]);
+//   console.log(role);
 
-  let manID;
-  if (manager === "John Doe") {
-    manID = 1;
-  }
-  if (manager === "Mary Smith") {
-    manID = 3;
-  }
-  if (manager === "Gary Stone") {
-    manID = 7;
-  }
+//   let manID;
+//   if (manager === "John Doe") {
+//     manID = 1;
+//   }
+//   if (manager === "Mary Smith") {
+//     manID = 3;
+//   }
+//   if (manager === "Gary Stone") {
+//     manID = 7;
+//   }
 
-  const query1 = `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?,?)`;
-  const data1 = await connection.query(query1, [first_name, last_name, role, manID]);
+//   const query1 = `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?,?)`;
+//   const data1 = await connection.query(query1, [first_name, last_name, role, manID]);
 
-  console.log("New employee was added!");
+//   console.log("New employee was added!");
 
-  init();
-}
+//   init();
+// }
 
-async function addDepartment() {
-  const { department } = await prompt({
-    name: "department",
-    message: "What department would you like to add?",
-    type: "input",
-  });
+// async function addDepartment() {
+//   const { department } = await prompt({
+//     name: "department",
+//     message: "What department would you like to add?",
+//     type: "input",
+//   });
 
-  const query = `INSERT INTO department (name) VALUES (?)`;
+//   const query = `INSERT INTO department (name) VALUES (?)`;
 
-  const data = await connection.query(query, [department]);
-  console.log("New department added!");
-  init();
-}
-async function addRole() {
-  const depsArray = await getDepsInArray();
-  const { title, salary, belongsTo } = await prompt([
-    {
-      name: "title",
-      message: "What role would you like to add?",
-      type: "input",
-    },
-    {
-      name: "salary",
-      type: "number",
-      message: "What is the salary for this role?",
-    },
-    {
-      name: "belongsTo",
-      type: "list",
-      message: "What department new role belongs to?",
-      choices: depsArray.map((depsItem) => ({
-        name: depsItem.name,
-        value: depsItem.id,
-      })),
-    },
-  ]);
-  console.log(belongsTo);
+//   const data = await connection.query(query, [department]);
+//   console.log("New department added!");
+//   init();
+// }
+// async function addRole() {
+//   const depsArray = await getDepsInArray();
+//   const { title, salary, belongsTo } = await prompt([
+//     {
+//       name: "title",
+//       message: "What role would you like to add?",
+//       type: "input",
+//     },
+//     {
+//       name: "salary",
+//       type: "number",
+//       message: "What is the salary for this role?",
+//     },
+//     {
+//       name: "belongsTo",
+//       type: "list",
+//       message: "What department new role belongs to?",
+//       choices: depsArray.map((depsItem) => ({
+//         name: depsItem.name,
+//         value: depsItem.id,
+//       })),
+//     },
+//   ]);
+//   console.log(belongsTo);
 
-  const query = `INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)`;
+//   const query = `INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)`;
 
-  const data = await connection.query(query, [title, salary, belongsTo]);
-  console.log("New role added!");
-  init();
-}
+//   const data = await connection.query(query, [title, salary, belongsTo]);
+//   console.log("New role added!");
+//   init();
+// }
 
 async function updateEmpRoles() {
   const empsInArray = await getEmpsInArray();
@@ -391,11 +404,9 @@ async function viewBudget() {
       })),
     });
   
-    const query = `SELECT first_name, last_name, title, salary
-      FROM employee 
-      INNER JOIN role ON employee.role_id = role.id 
-      INNER JOIN department ON role.department_id= department.id 
-      WHERE department.id = ?`;
+    const query = `SELECT SUM(salary) AS department_budget
+    FROM role
+    WHERE role.department_id = ?;`;
   
     const data = await connection.query(query, [department]);
     console.table(data);
