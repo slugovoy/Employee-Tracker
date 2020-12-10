@@ -58,6 +58,26 @@ async function init() {
       process.exit(0);
   }
 }
+// Methods
+async function getDepsInArray() {
+  const query = `SELECT name, id FROM department`;
+  const data = await connection.query(query);
+
+  return data;
+}
+
+async function getRolesInArray() {
+  const query = `SELECT title, id FROM role`;
+  const data = await connection.query(query);
+
+  return data;
+}
+async function getEmpsInArray() {
+  const query = `SELECT CONCAT(first_name, " ", last_name) AS name, id FROM employee`;
+  const data = await connection.query(query);
+
+  return data;
+}
 
 async function viewAllEmp() {
   const query =
@@ -69,10 +89,12 @@ async function viewAllEmp() {
 }
 
 async function viewByDepart() {
+  const depsArray = await getDepsInArray();
+
   const department = await prompt({
     name: "department",
     message: "What department would you like to chose?",
-    choices: ["Sales", "Engineering", "Finance", "Legal"],
+    choices: [...depsArray],
     type: "list",
   });
 
@@ -116,15 +138,14 @@ async function viewByManager() {
   init();
 }
 async function viewAllDep() {
-  const query = "SELECT *FROM department";
+  const query = "SELECT * FROM department";
 
   const data = await connection.query(query);
   console.table(data);
   init();
 }
 async function viewAllRoles() {
-  const query =
-    "SELECT * FROM role";
+  const query = "SELECT * FROM role";
 
   const data = await connection.query(query);
   console.table(data);
@@ -132,7 +153,8 @@ async function viewAllRoles() {
 }
 
 async function addEmployee() {
-  const { first_name, last_name, role, salary } = await prompt([
+  const rolesArray = await getRolesInArray();
+  const { first_name, last_name, role } = await prompt([
     {
       type: "input",
       name: "first_name",
@@ -147,50 +169,22 @@ async function addEmployee() {
       type: "list",
       name: "role",
       message: "What is employee role?",
-      choices: ["Salesperson", "Software Engineer", "Accountant", "Lawyer"],
-    },
-    {
-      type: "number",
-      name: "salary",
-      message: "What is employee's salary",
+      choices: rolesArray.map((roleItem) => ({
+        name: roleItem.title,
+        value: roleItem.id,
+      })),
     },
   ]);
+  console.log(role);
 
-  const query1 = `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)`;
-  const query2 = `INSERT INTO role (title, salary) VALUES (?, ?)`;
-  let depID;
-  let roleID;
-  let manager_id;
-  if (role === "Salesperson") {
-    depID = 1;
-    roleID = 2;
-    manager_id = 3;
-  }
-  if (role === "Software Engineer") {
-    depID = 2;
-    roleID = 4;
-    manager_id = 3;
-  }
-  if (role === "Accountant") {
-    depID = 3;
-    roleID = 5;
-  }
-  if (role === "Lawyer") {
-    depID = 4;
-    roleID = 6;
-    manager_id = 7;
-  }
+  //   const query2 = `INSERT INTO role (title, salary) VALUES (?, ?)`;
 
-  const query3 = `UPDATE role SET department_id = ? WHERE title = ?`;
+  //   const query3 = `UPDATE role SET department_id = ? WHERE title = ?`;
 
-  const data1 = await connection.query(query1, [
-    first_name,
-    last_name,
-    roleID,
-    manager_id,
-  ]);
-  const data2 = await connection.query(query2, [role, salary]);
-  const data3 = await connection.query(query3, [depID, role]);
+  const query1 = `INSERT INTO employee (first_name, last_name, role_id) VALUES (?, ?, ?)`;
+  const data1 = await connection.query(query1, [first_name, last_name, role]);
+  //   const data2 = await connection.query(query2, [role, salary]);
+  //   const data3 = await connection.query(query3, [depID, role]);
 
   console.log("New employee was added!");
 
@@ -205,35 +199,71 @@ async function addDepartment() {
   });
 
   const query = `INSERT INTO department (name) VALUES (?)`;
-  console.log(department);
 
   const data = await connection.query(query, [department]);
   console.log("New department added!");
   init();
 }
 async function addRole() {
-  const { title, salary } = await prompt(
+  const depsArray = await getDepsInArray();
+  const { title, salary, belongsTo } = await prompt([
     {
       name: "title",
       message: "What role would you like to add?",
       type: "input",
     },
     {
-      type: "number",
       name: "salary",
-      message: "What is the salary for this role",
+      type: "number",
+      message: "What is the salary for this role?",
     },
     {
-      name: "belongTo",
+      name: "belongsTo",
+      type: "list",
       message: "What department new role belongs to?",
-      choices: ["Sales", "Engineering", "Finance", "Legal"],
-    }
-  );
+      choices: depsArray.map((depsItem) => ({
+        name: depsItem.name,
+        value: depsItem.id,
+      })),
+    },
+  ]);
+  console.log(belongsTo);
 
-  const query = `INSERT INTO role (title, salary, department_id) VALUES (?, ?)`;
-  console.log(title, salary);
+  const query = `INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)`;
 
-  const data = await connection.query(query, [title, salary]);
+  const data = await connection.query(query, [title, salary, belongsTo]);
   console.log("New role added!");
+  init();
+}
+
+async function updateEmpRoles() {
+  const empsInArray = await getEmpsInArray();
+  const rolesArray = await getRolesInArray();
+  const { empName, newRole } = await prompt([
+    {
+      name: "empName",
+      type: "list",
+      choices: empsInArray.map((employee) => ({
+        name: employee.name,
+        value: employee.id,
+      })),
+      message: "What employee do you want to update?",
+    },
+    {
+      name: "newRole",
+      type: "list",
+      choices: rolesArray.map((roleItem) => ({
+        name: roleItem.title,
+        value: roleItem.id,
+      })),
+      message: "What role do you want to give?"
+    },
+  ]);
+  console.log(empName, newRole);
+
+  const query = `UPDATE employee SET role_id = ? WHERE id = ?;`;
+
+  const data = await connection.query(query, [newRole, empName]);
+  console.log("Employee's role updated!");
   init();
 }
