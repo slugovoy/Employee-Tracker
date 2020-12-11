@@ -2,7 +2,7 @@
 
 Employee Tracker is an application for building and maintaining companies employee data base. This application allows managers or someone within the company to view all employees, roles, as well as departments. It also allows for adding employees, roles, departments and updating employees.
 
-Checkout the [Walkthrough Video here]().
+Checkout the [Walkthrough Video here](https://youtu.be/51xY7kXA_8I).
 
 ## Table of Contents
 * [Installation](#installation)
