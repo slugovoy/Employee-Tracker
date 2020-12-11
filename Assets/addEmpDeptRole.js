@@ -1,9 +1,10 @@
 const { prompt } = require("inquirer");
 const connection = require("../db");
-const { getDepsInArray, getRolesInArray } = require("./methods.js");
+const { getDepsInArray, getRolesInArray, getEmpsInArray } = require("./methods.js");
 
 async function addEmployee() {
     const rolesArray = await getRolesInArray();
+    const empsInArray = await getEmpsInArray();
     const { first_name, last_name, role, manager } = await prompt([
       {
         type: "input",
@@ -28,28 +29,20 @@ async function addEmployee() {
           type: "list",
           name: "manager",
           message: "Who will be the employee manager?",
-          choices: ["Mary Smith", "Garry Stone", "John Doe"]
-      }
+          choices: empsInArray.map((employee) => ({
+            name: employee.name,
+            value: employee.id,
+      })),
+    },
     ]);
     console.log(role);
   
-    let manID;
-    if (manager === "John Doe") {
-      manID = 1;
-    }
-    if (manager === "Mary Smith") {
-      manID = 3;
-    }
-    if (manager === "Gary Stone") {
-      manID = 7;
-    }
-  
     const query1 = `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?,?)`;
-    const data1 = await connection.query(query1, [first_name, last_name, role, manID]);
+    const data1 = await connection.query(query1, [first_name, last_name, role, manager]);
   
     console.log("New employee was added!");
   
-    // init();
+    
   }
   
   async function addDepartment() {
@@ -63,7 +56,7 @@ async function addEmployee() {
   
     const data = await connection.query(query, [department]);
     console.log("New department added!");
-    // init();
+    
   }
   async function addRole() {
     const depsArray = await getDepsInArray();
@@ -94,7 +87,7 @@ async function addEmployee() {
   
     const data = await connection.query(query, [title, salary, belongsTo]);
     console.log("New role added!");
-    // init();
+   
   }
 
   module.exports = {
