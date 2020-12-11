@@ -17,7 +17,7 @@ async function viewAllEmp() {
   
     const data = await connection.query(query);
     console.table(data);
-    // init();
+    
   }
   
   async function viewByDepart() {
@@ -42,7 +42,7 @@ async function viewAllEmp() {
   
     const data = await connection.query(query, [department]);
     console.table(data);
-    // init();
+    
   }
   async function viewByManager() {
     const { manager } = await prompt({
@@ -69,14 +69,14 @@ async function viewAllEmp() {
   
     const data = await connection.query(query, manID);
     console.table(data);
-    // init();
+    
   }
   async function viewAllDep() {
     const query = "SELECT name FROM department";
   
     const data = await connection.query(query);
     console.table(data);
-    // init();
+    
   }
   async function viewAllRoles() {
     const depsArray = await getDepsInArray();
@@ -87,7 +87,7 @@ async function viewAllEmp() {
   
     const data = await connection.query(query);
     console.table(data);
-    // init();
+ 
   }
 
   module.exports = {
