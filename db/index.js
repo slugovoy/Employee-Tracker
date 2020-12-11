@@ -1,6 +1,8 @@
+// PAckages
 const util = require("util");
 const mysql = require("mysql");
 
+// Create connection to database
 const connection = mysql.createConnection({
   host: "localhost",
   // Your username

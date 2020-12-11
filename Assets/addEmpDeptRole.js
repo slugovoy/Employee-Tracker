@@ -1,10 +1,14 @@
+// Variables for functions, methods, packages
 const { prompt } = require("inquirer");
 const connection = require("../db");
 const { getDepsInArray, getRolesInArray, getEmpsInArray } = require("./methods.js");
 
+// Add employee
 async function addEmployee() {
+  // Methods
     const rolesArray = await getRolesInArray();
     const empsInArray = await getEmpsInArray();
+    //Prompts
     const { first_name, last_name, role, manager } = await prompt([
       {
         type: "input",
@@ -36,7 +40,7 @@ async function addEmployee() {
     },
     ]);
     console.log(role);
-  
+  // Send request to database
     const query1 = `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?,?)`;
     const data1 = await connection.query(query1, [first_name, last_name, role, manager]);
   
@@ -45,7 +49,9 @@ async function addEmployee() {
     
   }
   
+  // Add department
   async function addDepartment() {
+    // Prompt
     const { department } = await prompt({
       name: "department",
       message: "What department would you like to add?",
@@ -53,13 +59,17 @@ async function addEmployee() {
     });
   
     const query = `INSERT INTO department (name) VALUES (?)`;
-  
+  // Send request to database
     const data = await connection.query(query, [department]);
     console.log("New department added!");
     
   }
+
+  // Add role
   async function addRole() {
+    // Methods
     const depsArray = await getDepsInArray();
+    // Prompts
     const { title, salary, belongsTo } = await prompt([
       {
         name: "title",
@@ -84,12 +94,13 @@ async function addEmployee() {
     console.log(belongsTo);
   
     const query = `INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)`;
-  
+  // Send request to database
     const data = await connection.query(query, [title, salary, belongsTo]);
     console.log("New role added!");
    
   }
 
+  // Exports functions
   module.exports = {
       addEmployee,
       addDepartment,

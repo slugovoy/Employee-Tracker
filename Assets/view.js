@@ -1,8 +1,9 @@
+// Variables for functions, methods, packages
 const { prompt } = require("inquirer");
 const connection = require("../db");
 const { getDepsInArray } = require("./methods.js");
 
-
+// View all employees
 async function viewAllEmp() {
     const query =
       `SELECT  e.first_name, e.last_name,
@@ -15,14 +16,16 @@ async function viewAllEmp() {
       INNER JOIN department ON role.department_id = department.id
       ORDER BY manager DESC;`;
   
+
+    // Send request to database
     const data = await connection.query(query);
     console.table(data);
     
   }
-  
+  // View employees by department
   async function viewByDepart() {
     const depsArray = await getDepsInArray();
-  
+  // Prompts
     const { department }= await prompt({
       name: "department",
       message: "What department would you like to chose?",
@@ -32,19 +35,24 @@ async function viewAllEmp() {
       })),
       type: "list",
     });
-    
-  console.log(department);
+  
     const query = `SELECT first_name, last_name, title, salary
       FROM employee 
       INNER JOIN role ON employee.role_id = role.id 
       INNER JOIN department ON role.department_id= department.id 
       WHERE department.id = ?`;
   
+
+      // Send request to database
     const data = await connection.query(query, [department]);
     console.table(data);
     
   }
+
+  // Function to view employees by manager
   async function viewByManager() {
+
+    // Prompts
     const { manager } = await prompt({
       name: "manager",
       message: "What manager would you like to chose?",
@@ -66,11 +74,13 @@ async function viewAllEmp() {
       FROM employee
       INNER JOIN role ON employee.role_id = role.id  
       WHERE manager_id = ?`;
-  
+  // Send request to database
     const data = await connection.query(query, manID);
     console.table(data);
     
   }
+
+  // View all departments
   async function viewAllDep() {
     const query = "SELECT name FROM department";
   
@@ -84,12 +94,12 @@ async function viewAllEmp() {
     INNER JOIN department
     ON role.department_id = department.id
     ORDER BY name ASC`;
-  
+    // Send request to database
     const data = await connection.query(query);
     console.table(data);
  
   }
-
+// Export functions
   module.exports = {
       viewAllEmp,
       viewByDepart,
