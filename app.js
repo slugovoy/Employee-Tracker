@@ -1,3 +1,4 @@
+// Variables for functions, methods, packages
 const { prompt } = require("inquirer");
 const connection = require("./db");
 const logo = require("asciiart-logo");
@@ -7,6 +8,7 @@ const { addEmployee, addDepartment, addRole } = require("./Assets/addEmpDeptRole
 const { removeEmployee, removeRole, removeDepartment  } = require("./Assets/removeEmpDeptRole.js")
 const { getDepsInArray, getRolesInArray, getEmpsInArray } = require("./Assets/methods.js");
 
+// Method for logo using asciiart
 console.log(
   logo({
     name: "EMPLOYEE TRACKER",
@@ -24,7 +26,7 @@ console.log(
     .render()
 );
 init();
-
+// Function that initiates the app
 async function init() {
   const { action } = await prompt({
     name: "action",
@@ -48,6 +50,7 @@ async function init() {
     type: "list",
   });
 
+  // Switch methods for different actions
   switch (action) {
     case "View All Employees":
       await viewAllEmp();
@@ -103,10 +106,13 @@ async function init() {
       process.exit(0);
   }
 };
-
+// Function to update employee role
 async function updateEmpRoles() {
+
+  // Methods
   const empsInArray = await getEmpsInArray();
   const rolesArray = await getRolesInArray();
+  // Prompt
   const { empName, newRole } = await prompt([
     {
       name: "empName",
@@ -127,18 +133,18 @@ async function updateEmpRoles() {
       message: "What role do you want to give?",
     },
   ]);
-  console.log(empName, newRole);
-
+  // Query request
   const query = `UPDATE employee SET role_id = ? WHERE id = ?;`;
-
+  // Send request to database
   const data = await connection.query(query, [newRole, empName]);
   console.log("Employee's role updated!");
   init();
 };
 
+// Function to view budget by department
 async function viewBudget() {
     const depsArray = await getDepsInArray();
-  
+  // Prompt
     const { department } = await prompt({
       name: "department",
       type: "list",
@@ -148,13 +154,13 @@ async function viewBudget() {
         value: depart.id,
       })),
     });
-  
+  // Query request
     const query = `SELECT SUM(salary) AS utilized_budget, name AS department_name
     FROM role
     INNER JOIN employee ON  role.id = employee.role_id
     INNER JOIN department ON role.department_id = department.id
     WHERE role.department_id = ?`;
-  
+  // Send request to database
     const data = await connection.query(query, [department]);
     console.table(data);
     init();
